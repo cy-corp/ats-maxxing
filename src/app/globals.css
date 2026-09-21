@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f4ef;
+  --foreground: #2a2e34;
+  --muted: #6b7280;
+  --accent: #6a9fc4;
+  --accent-soft: #8ebae3;
+  --accent-dim: rgba(106, 159, 196, 0.12);
+  --stone: #c4b8a8;
+  --forest: #3d5a45;
+  --panel: rgba(255, 255, 255, 0.55);
+  --panel-solid: #fbfaf7;
+  --border: rgba(42, 46, 52, 0.18);
+  --border-strong: rgba(42, 46, 52, 0.32);
+  --warning: #9a6b2f;
+  --danger: #8b3a3a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-pixel: var(--font-pixel);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+}
+
+/* Clickable affordance */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+label[for],
+summary,
+input[type="file"],
+input[type="range"],
+select:not(:disabled) {
+  cursor: pointer;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  min-height: 100dvh;
+  background-image:
+    radial-gradient(ellipse 90% 55% at 50% -10%, rgba(142, 186, 227, 0.28), transparent 55%),
+    linear-gradient(180deg, #eef3f8 0%, #f6f4ef 42%, #f3efe7 100%);
+}
+
+::selection {
+  background: rgba(142, 186, 227, 0.35);
+  color: #1a1d22;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(42, 46, 52, 0.18);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(42, 46, 52, 0.3);
+}
+
+.font-pixel {
+  font-family: var(--font-pixel), var(--font-geist-mono), monospace;
+  letter-spacing: 0.04em;
+}
+
+/* wireframe panel corners */
+.ascii-frame {
+  position: relative;
+}
+.ascii-frame::before,
+.ascii-frame::after,
+.ascii-frame > .ascii-corner-bl,
+.ascii-frame > .ascii-corner-br {
+  content: "+";
+  position: absolute;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--foreground);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 2;
+}
+.ascii-frame::before {
+  top: -6px;
+  left: -5px;
+}
+.ascii-frame::after {
+  top: -6px;
+  right: -5px;
+}
+.ascii-corner-bl {
+  bottom: -6px;
+  left: -5px;
+}
+.ascii-corner-br {
+  bottom: -6px;
+  right: -5px;
+}
+
+/* Hero wind / breeze — transform + opacity only */
+@keyframes breeze-drift {
+  from {
+    transform: translate3d(-20%, 0, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: var(--breeze-peak, 0.35);
+  }
+  78% {
+    opacity: var(--breeze-peak, 0.35);
+  }
+  to {
+    transform: translate3d(120%, 0, 0);
+    opacity: 0;
+  }
+}
+
+@keyframes breeze-mote {
+  from {
+    transform: translate3d(-5%, 0, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.55;
+  }
+  80% {
+    opacity: 0.4;
+  }
+  to {
+    transform: translate3d(105vw, -12px, 0);
+    opacity: 0;
+  }
+}
+
+.breeze-layer[data-paused="true"] .breeze-wisp,
+.breeze-layer[data-paused="true"] .breeze-mote {
+  animation-play-state: paused;
+  will-change: auto;
+}
+
+.breeze-wisp {
+  position: absolute;
+  left: 0;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    rgba(200, 225, 245, 0.35),
+    transparent
+  );
+  filter: blur(0.4px);
+  animation: breeze-drift var(--breeze-dur, 14s) linear infinite;
+  animation-delay: var(--breeze-delay, 0s);
+  will-change: transform, opacity;
+}
+
+.breeze-mote {
+  position: absolute;
+  left: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+  animation: breeze-mote var(--breeze-dur, 18s) linear infinite;
+  animation-delay: var(--breeze-delay, 0s);
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .breeze-wisp,
+  .breeze-mote {
+    animation: none !important;
+    opacity: 0 !important;
+    will-change: auto;
+  }
+}
