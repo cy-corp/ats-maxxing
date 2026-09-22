@@ -93,18 +93,19 @@ export function mergePreservedSourceFields<
     contact: {
       name: string;
       email: string;
-      phone: string;
-      location: string;
-      linkedin: string;
-      portfolio: string;
+      phone?: string;
+      location?: string;
+      linkedin?: string;
+      portfolio?: string;
     };
-    certifications: string[];
+    certifications?: string[];
   },
 >(resume: T, sourceText: string): T {
   const hints = extractPreserveHints(sourceText);
+  const existingCerts = resume.certifications ?? [];
   const rawCerts =
-    resume.certifications.filter((c) => c.trim().length > 0).length > 0
-      ? resume.certifications
+    existingCerts.filter((c) => c.trim().length > 0).length > 0
+      ? existingCerts
       : hints.certifications;
 
   const certifications = rawCerts

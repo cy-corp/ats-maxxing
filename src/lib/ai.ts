@@ -121,7 +121,7 @@ function withExports(
   sourceText: string,
 ): OptimizedResume {
   const merged = mergePreservedSourceFields(partial, sourceText);
-  const resume = { ...merged, plainText: "", markdown: "" };
+  const resume: OptimizedResume = { ...merged, plainText: "", markdown: "" };
   return {
     ...resume,
     plainText: resumeToPlainText(resume),
