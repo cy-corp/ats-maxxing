@@ -20,6 +20,8 @@ export async function POST(req: NextRequest) {
       larpingLevel?: LarpingLevel;
       density?: ResumeDensity;
       yearsOfExperience?: number;
+      includeTechnicalSkills?: boolean;
+      includeProjects?: boolean;
     };
 
     const resumeText = body.resumeText?.trim() ?? "";
@@ -52,6 +54,8 @@ export async function POST(req: NextRequest) {
         ? Number(body.larpingLevel)
         : 2) as LarpingLevel,
       density,
+      includeTechnicalSkills: body.includeTechnicalSkills !== false,
+      includeProjects: body.includeProjects !== false,
       ...(yearsOfExperience !== undefined ? { yearsOfExperience } : {}),
     };
 

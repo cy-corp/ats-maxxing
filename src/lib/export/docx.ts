@@ -113,12 +113,14 @@ export async function buildDocxBuffer(resume: OptimizedResume): Promise<Buffer> 
     }
   }
 
-  children.push(section("Technical Skills"));
-  children.push(
-    new Paragraph({
-      children: [new TextRun({ text: resume.skills.join(", "), size: 20 })],
-    }),
-  );
+  if (resume.skills?.length) {
+    children.push(section("Technical Skills"));
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: resume.skills.join(", "), size: 20 })],
+      }),
+    );
+  }
 
   if (resume.projects?.length) {
     children.push(section("Projects"));

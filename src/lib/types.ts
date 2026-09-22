@@ -72,6 +72,10 @@ export interface GenerateRequest {
    * If unset, the model must compute from the earliest listed job start → today.
    */
   yearsOfExperience?: number;
+  /** Include Technical Skills section (default true). */
+  includeTechnicalSkills?: boolean;
+  /** Include Projects section (default true). */
+  includeProjects?: boolean;
 }
 
 export interface ScrapeResult {

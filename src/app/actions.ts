@@ -66,6 +66,8 @@ export async function generateResumeAction(input: {
   larpingLevel: LarpingLevel;
   density: ResumeDensity;
   yearsOfExperience?: number;
+  includeTechnicalSkills?: boolean;
+  includeProjects?: boolean;
 }): Promise<GenerateActionResult> {
   const resumeText = input.resumeText?.trim() ?? "";
   const jobText = input.jobText?.trim() ?? "";
@@ -95,6 +97,8 @@ export async function generateResumeAction(input: {
     language: input.language,
     larpingLevel: input.larpingLevel,
     density,
+    includeTechnicalSkills: input.includeTechnicalSkills !== false,
+    includeProjects: input.includeProjects !== false,
     ...(yearsOfExperience !== undefined ? { yearsOfExperience } : {}),
   };
 

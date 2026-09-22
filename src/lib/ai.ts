@@ -119,8 +119,9 @@ const GENERATE_TIMEOUT_MS = 90_000;
 function withExports(
   partial: Omit<OptimizedResume, "plainText" | "markdown">,
   sourceText: string,
+  options?: { includeSkills?: boolean; includeProjects?: boolean },
 ): OptimizedResume {
-  const merged = mergePreservedSourceFields(partial, sourceText);
+  const merged = mergePreservedSourceFields(partial, sourceText, options);
   const resume: OptimizedResume = { ...merged, plainText: "", markdown: "" };
   return {
     ...resume,
@@ -133,7 +134,12 @@ export async function generateOptimizedResume(
   input: GenerateRequest,
 ): Promise<{ resume: OptimizedResume; provider: ProviderId }> {
   const { provider, model } = getPrimaryModel();
-  const system = buildSystemPrompt(input.density);
+  const includeSkills = input.includeTechnicalSkills !== false;
+  const includeProjects = input.includeProjects !== false;
+  const system = buildSystemPrompt(input.density, {
+    includeTechnicalSkills: includeSkills,
+    includeProjects,
+  });
   const prompt = buildUserPrompt(input);
 
   const controller = new AbortController();
@@ -164,7 +170,13 @@ export async function generateOptimizedResume(
             },
           }),
     });
-    return { resume: withExports(object, input.resumeText), provider };
+    return {
+      resume: withExports(object, input.resumeText, {
+        includeSkills,
+        includeProjects,
+      }),
+      provider,
+    };
   } catch (err) {
     if (controller.signal.aborted) {
       throw new Error("Timed out after 90s. Try again with a shorter job text.");

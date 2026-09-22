@@ -91,16 +91,17 @@ Hard length budgets (strict — treat as soft targets that must be approached):
 - Summary: 3–5 sentences, 420–680 characters. Must include exact target job title from JD + 2–3 quantified high-impact claims.
 - Professional Experience: 3–6 roles (prefer 4–5). Most recent / most relevant role: 4–6 bullets. Older relevant roles: 3–5 bullets. Drop only clearly irrelevant early-career roles.
 - Bullet length: 110–160 characters each (roughly 18–28 words). Every bullet must start with a strong action verb and include at least one number, %, $, time frame, scale, or ranking when the source supports it (or when larpingLevel ≥ 4 allows stretch).
-- Technical Skills: 12–22 items, grouped or comma-separated, exact JD spelling preferred.
-- Projects: 0–3 (only if high relevance and space allows).
-- Certifications: ALWAYS keep every certification present in the source resume. Never drop or invent.
+- Technical Skills: 12–22 items when the section is enabled (see SECTION TOGGLES).
+- Projects: 0–3 when the section is enabled and space allows.
+- Certifications: MANDATORY — copy EVERY certification / language exam / license from the source (including Cambridge B2, TOEFL, etc. even if nested under Education). NEVER drop certs to save space. Never invent.
 - Contact: ALWAYS preserve name, email, phone, location, LinkedIn, portfolio exactly as in source (or leave blank only if truly absent).
 
-Priority order when space is tight:
+Priority order when space is tight (certs are NEVER optional):
 1. Contact + exact target title in summary
-2. Most recent 2–3 roles with quantified bullets
-3. Hard skills that match JD (exact spelling)
-4. Remaining roles / certs / projects
+2. ALL certifications from source
+3. Most recent 2–3 roles with quantified bullets
+4. Hard skills that match JD (exact spelling) — in skills[] if enabled, else weave into bullets
+5. Remaining roles / projects (only if projects enabled)
 
 Never produce fewer than 3 experience roles unless the source has fewer. Prefer substance and metrics over artificial brevity. 1.0–1.4 pages is ideal; 1.5–2 is acceptable if source is rich.`;
   }
@@ -113,23 +114,45 @@ Hard length budgets:
 - Summary: 4–6 sentences, 550–900 characters. Exact target job title + 3–4 quantified claims + domain expertise.
 - Professional Experience: all relevant roles (typically 4–7). Most recent: 5–7 bullets. Mid roles: 4–6. Older: 3–5.
 - Bullet length: 120–180 characters. Prefer quantified impact.
-- Technical Skills: 15–30 items, prioritize exact JD matches.
-- Projects: include all relevant ones from source (up to 5).
-- Certifications: full list from source + any highly relevant ones that can be honestly claimed at current larpingLevel.
+- Technical Skills: 15–30 items when the section is enabled (see SECTION TOGGLES).
+- Projects: include all relevant ones from source (up to 5) when the section is enabled.
+- Certifications: MANDATORY full list from source (every cert / language exam / license) — never drop. Never invent.
 - Contact: always preserve source PII.
 
-Use the extra space for deeper quantification, more keyword density in bullets, and secondary but relevant roles/projects.`;
+Use the extra space for deeper quantification, more keyword density in bullets, and secondary but relevant roles/projects (when enabled).`;
 }
 
-export function buildSystemPrompt(density: ResumeDensity = "condensed"): string {
+function sectionsInstruction(input: GenerateRequest): string {
+  const skills = input.includeTechnicalSkills !== false;
+  const projects = input.includeProjects !== false;
+  return `SECTION TOGGLES (user choice — obey strictly):
+- Technical Skills section: ${skills ? "INCLUDE — fill skills[] with JD-aligned hard skills" : "OMIT — set skills[] to []. Still place JD hard skills inside experience bullets for ATS match."}
+- Projects section: ${projects ? "INCLUDE — fill projects[] from source when relevant" : "OMIT — set projects[] to []. Do not invent projects."}
+- Certifications: ALWAYS INCLUDE every source cert (not toggleable).`;
+}
+
+export function buildSystemPrompt(
+  density: ResumeDensity = "condensed",
+  sections?: Pick<GenerateRequest, "includeTechnicalSkills" | "includeProjects">,
+): string {
+  const sectionBlock = sectionsInstruction({
+    resumeText: "",
+    jobText: "",
+    language: "en",
+    larpingLevel: 2,
+    density,
+    includeTechnicalSkills: sections?.includeTechnicalSkills,
+    includeProjects: sections?.includeProjects,
+  });
+
   return `You are ATS Maxxing, an elite resume optimization engine.
 
 Rewrite the candidate resume to maximize ATS match for ONE job posting, per Larping Level, language, and length mode.
 
 ALWAYS (ATS hard rules):
-- Section titles must be exactly: "Professional Experience", "Technical Skills", "Education", "Projects", "Certifications" (language-aware: use Portuguese equivalents if language=pt). Never use bare "Experience".
+- Section titles must be exactly: "Professional Experience", "Technical Skills", "Education", "Projects", "Certifications" (language-aware: use Portuguese equivalents if language=pt). Never use bare "Experience". Omit Technical Skills / Projects headings entirely when those sections are toggled OFF.
 - Contact block: never invent or drop phone, location, LinkedIn, portfolio. Copy from source or leave empty string "" only if truly absent.
-- Certifications: copy every certification from the source resume. Do not drop any. If a cert has no year/date, omit parentheses entirely — never output empty "()".
+- Certifications: ALWAYS copy every certification / language exam from the source. Never drop any (including Cambridge B2). If a cert has no year/date, omit parentheses entirely — never output empty "()".
 - YEARS OF EXPERIENCE: Never reduce true tenure to match a lower JD minimum. Prefer an explicit user years override when present; otherwise compute from earliest job start → today as whole "N+ years". Never invent a lower figure (e.g. "1.5+") when dates support "2+".
 - Summary must open with or clearly contain the exact target job title from the JD (e.g. "Software Engineer (Java) with 3+ years...").
 - Every experience bullet should contain at least one quantifiable element when possible (numbers, %, $, time saved, team size, volume, ranking). Prefer this over pure duty statements.
@@ -142,11 +165,12 @@ HARD RULES — ATS PARSERS (Jobscan-style):
    - Copy email, phone, location/address, LinkedIn, and portfolio EXACTLY from the source when present.
    - location = City, Region/State, Country (or as complete as the source allows).
 
-2) CERTIFICATIONS / PROJECTS FROM SOURCE:
-   - If the source lists certifications (or licenses), copy them all into certifications[].
-   - Format certs cleanly: "Name – Detail — Issuer" or "Name — Issuer". NEVER append empty "()" / "[]" when year/date is missing — omit the date entirely.
-   - If the source lists projects worth keeping for ATS keywords, include them in projects[].
-   - Do not delete source certs to shorten the resume.
+2) CERTIFICATIONS (NON-NEGOTIABLE — never skip):
+   - Copy EVERY certification, language exam, and license from the source into certifications[].
+   - Includes items under Education-looking blocks (e.g. "Cambridge Assessment English / B2 First – Score 175").
+   - Format cleanly: "Name – Detail — Issuer" or "Name — Issuer". NEVER append empty "()" / "[]".
+   - NEVER drop certs to shorten condensed resumes. Trim bullets/projects for space, never certs.
+   - Projects: only when SECTION TOGGLES say include; otherwise projects[] = [].
 
 3) YEARS OF EXPERIENCE (do not understate):
    - If the user provides an explicit years override, that number is the FLOOR — use it (or higher if source dates prove more). Write as "N+" (e.g. 3 → "3+ years").
@@ -159,16 +183,19 @@ HARD RULES — ATS PARSERS (Jobscan-style):
    - Extract the target job title from the JD.
    - Put that EXACT title string in the Professional Summary (first sentence), even if the candidate never held it verbatim — frame as target/fit.
 
-4) HARD SKILLS MATCH (critical):
+5) HARD SKILLS MATCH (critical):
    - Extract hard skills from the JD: languages, frameworks, tools, platforms, domains.
    - Hit the larping-level coverage target with EXACT JD spelling.
-   - skills[] must lead with JD hard skills; also appear in bullets where natural.
+   - If Technical Skills section is ON: skills[] must lead with JD hard skills; also appear in bullets where natural.
+   - If Technical Skills section is OFF: skills[] = []; still place JD hard skills in experience bullets.
    - Soft skills alone do not count toward hard-skill coverage.
    - injectedKeywords = the JD hard skills you deliberately placed.
 
-5) DATES: ATS-friendly formats (e.g. "Jan 2021 – Present", "2019 – 2022"). For education.year or cert dates: use "" when unknown — never invent empty parentheses in display strings.
+6) DATES: ATS-friendly formats (e.g. "Jan 2021 – Present", "2019 – 2022"). For education.year or cert dates: use "" when unknown — never invent empty parentheses in display strings.
 
-6) LAYOUT: single-column only.
+7) LAYOUT: single-column only.
+
+${sectionBlock}
 
 ${densityInstruction(density)}
 
@@ -211,6 +238,8 @@ ${larpingBlock(input.larpingLevel)}
 
 ${densityInstruction(input.density)}
 
+${sectionsInstruction(input)}
+
 ${yearsInstruction(input)}
 
 === CANDIDATE RESUME (SOURCE) ===
@@ -222,10 +251,11 @@ ${input.jobText.trim().slice(0, 8000)}
 Produce ONE OptimizedResume JSON object now.
 
 FINAL CHECKLIST BEFORE OUTPUT:
-1. Did I keep phone + location + all certs from source (no empty "()" on certs)?
+1. Did I keep phone + location + ALL certs from source including language exams like Cambridge B2 (no empty "()")?
 2. Does the summary contain the exact JD job title AND at least the true years (override floor or date-computed — never lower)?
-3. Are ≥80% (or the larping target) of JD hard skills present with exact spelling?
-4. Does every recent bullet contain a number / % / scale when the level allows?
-5. Is the content dense enough to fill ~1 page (condensed) or 2 pages (extended)?
-6. injectedKeywords lists the exact terms I placed.`;
+3. Did I obey SECTION TOGGLES for Technical Skills and Projects?
+4. Are ≥80% (or the larping target) of JD hard skills present with exact spelling (in skills[] and/or bullets)?
+5. Does every recent bullet contain a number / % / scale when the level allows?
+6. Is the content dense enough to fill ~1 page (condensed) or 2 pages (extended)?
+7. injectedKeywords lists the exact terms I placed.`;
 }

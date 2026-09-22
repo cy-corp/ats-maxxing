@@ -13,6 +13,10 @@ import { LarpingSlider } from "@/components/workspace/larping-slider";
 import { MatchScore } from "@/components/workspace/match-score";
 import { ResumeInput } from "@/components/workspace/resume-input";
 import { ResumePreview } from "@/components/workspace/resume-preview";
+import {
+  SectionToggles,
+  type SectionOptions,
+} from "@/components/workspace/section-toggles";
 import { YearsInput } from "@/components/workspace/years-input";
 import type {
   LarpingLevel,
@@ -35,6 +39,10 @@ export function Workspace() {
   const [yearsOfExperience, setYearsOfExperience] = useState<
     number | undefined
   >(undefined);
+  const [sections, setSections] = useState<SectionOptions>({
+    includeTechnicalSkills: true,
+    includeProjects: true,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rateLimited, setRateLimited] = useState(false);
@@ -61,6 +69,8 @@ export function Workspace() {
         larpingLevel,
         density,
         yearsOfExperience,
+        includeTechnicalSkills: sections.includeTechnicalSkills,
+        includeProjects: sections.includeProjects,
       });
       if (!res.ok) {
         setError(res.error);
@@ -143,6 +153,8 @@ export function Workspace() {
             />
             <div className="border-t border-dashed border-[var(--border)]" />
             <DensitySelector value={density} onChange={setDensity} />
+            <div className="border-t border-dashed border-[var(--border)]" />
+            <SectionToggles value={sections} onChange={setSections} />
             <div className="border-t border-dashed border-[var(--border)]" />
             <LarpingSlider value={larpingLevel} onChange={setLarpingLevel} />
             <GenerateButton

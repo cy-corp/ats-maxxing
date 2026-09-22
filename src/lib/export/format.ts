@@ -42,9 +42,11 @@ export function resumeToPlainText(resume: OptimizedResume): string {
     lines.push(educationLine(edu.degree, edu.school, edu.year));
     if (edu.details) lines.push(edu.details);
   }
-  lines.push("");
-  lines.push("TECHNICAL SKILLS");
-  lines.push(resume.skills.join(", "));
+  if (resume.skills?.length) {
+    lines.push("");
+    lines.push("TECHNICAL SKILLS");
+    lines.push(resume.skills.join(", "));
+  }
   if (resume.projects?.length) {
     lines.push("");
     lines.push("PROJECTS");
@@ -102,10 +104,12 @@ export function resumeToMarkdown(resume: OptimizedResume): string {
     );
     if (edu.details) lines.push(`  - ${edu.details}`);
   }
-  lines.push("");
-  lines.push("## Technical Skills");
-  lines.push("");
-  lines.push(resume.skills.join(", "));
+  if (resume.skills?.length) {
+    lines.push("");
+    lines.push("## Technical Skills");
+    lines.push("");
+    lines.push(resume.skills.join(", "));
+  }
   if (resume.projects?.length) {
     lines.push("");
     lines.push("## Projects");

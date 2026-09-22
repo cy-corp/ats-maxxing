@@ -15,6 +15,10 @@ const LOCATION_LINE_RE =
 const CERT_SECTION_RE =
   /(?:^|\n)\s*(?:certifications?|certificados?|certificates?|licen[cç]as?|licenses?)\s*:?\s*\n([\s\S]*?)(?=\n\s*(?:experience|professional experience|educa|skills|technical skills|projects?|summary|resumo|experi[eê]ncia|forma[cç][aã]o|habilidades|projetos)\b|$)/i;
 
+/** Lines that look like certs even when mis-nested under Education. */
+const CERT_LINE_RE =
+  /\b(?:cambridge|assessment english|b2 first|c1 advanced|c2 proficiency|toefl|ielts|duolingo english|aws certified|microsoft certified|azure|google cloud|cka|ckad|pmp|scrum master|comptia|oracle certified|cisco certified)\b/i;
+
 export interface SourcePreserveHints {
   email?: string;
   phone?: string;
@@ -22,6 +26,65 @@ export interface SourcePreserveHints {
   linkedin?: string;
   portfolio?: string;
   certifications: string[];
+}
+
+function normalizeCertKey(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function pushUniqueCert(target: string[], line: string) {
+  const cleaned = cleanEmptyDecorators(line);
+  if (cleaned.length < 3 || cleaned.length > 180) return;
+  if (/^(certifications?|certificados?|certificates?)\b/i.test(cleaned)) return;
+  const key = normalizeCertKey(cleaned);
+  if (!key) return;
+  const duplicate = target.some((existing) => {
+    const ek = normalizeCertKey(existing);
+    return ek === key || ek.includes(key) || key.includes(ek);
+  });
+  if (duplicate) return;
+  target.push(cleaned);
+}
+
+function extractCertLinesFromBlock(block: string, out: string[]) {
+  for (const raw of block.split(/\n+/)) {
+    const line = raw
+      .replace(/^[-•*]\s*/, "")
+      .replace(/^\d+[.)]\s*/, "")
+      .trim();
+    pushUniqueCert(out, line);
+  }
+}
+
+/** Catch Cambridge / language certs that sit next to Education without a Cert header. */
+function extractLooseCertLines(text: string, out: string[]) {
+  const lines = text.split(/\n+/).map((l) => l.replace(/^[-•*]\s*/, "").trim());
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line || line.length < 3) continue;
+    if (!CERT_LINE_RE.test(line)) continue;
+
+    let combined = line;
+    const next = lines[i + 1];
+    // "Cambridge Assessment English" + "B2 First – Score 175"
+    if (
+      next &&
+      next.length < 120 &&
+      !/^(university|bachelor|master|professional experience|education|technical skills)\b/i.test(
+        next,
+      ) &&
+      (CERT_LINE_RE.test(next) ||
+        /\b(?:b2|c1|c2|first|score|band|points?)\b/i.test(next))
+    ) {
+      combined = `${line} — ${next}`;
+      i += 1;
+    }
+    pushUniqueCert(out, combined);
+  }
 }
 
 export function extractPreserveHints(sourceText: string): SourcePreserveHints {
@@ -47,18 +110,8 @@ export function extractPreserveHints(sourceText: string): SourcePreserveHints {
 
   const certifications: string[] = [];
   const certBlock = text.match(CERT_SECTION_RE)?.[1];
-  if (certBlock) {
-    for (const raw of certBlock.split(/\n+/)) {
-      const line = raw
-        .replace(/^[-•*]\s*/, "")
-        .replace(/^\d+[.)]\s*/, "")
-        .trim();
-      if (line.length < 3 || line.length > 160) continue;
-      if (/^(certifications?|certificados?)\b/i.test(line)) continue;
-      certifications.push(line);
-      if (certifications.length >= 12) break;
-    }
-  }
+  if (certBlock) extractCertLinesFromBlock(certBlock, certifications);
+  extractLooseCertLines(text, certifications);
 
   return {
     email,
@@ -66,7 +119,7 @@ export function extractPreserveHints(sourceText: string): SourcePreserveHints {
     location,
     linkedin,
     portfolio,
-    certifications,
+    certifications: certifications.slice(0, 16),
   };
 }
 
@@ -88,6 +141,17 @@ export function cleanEmptyDecorators(text: string): string {
     .trim();
 }
 
+/** Union AI certs with every cert found in source — never drop source certs. */
+export function mergeCertifications(
+  aiCerts: string[] | undefined,
+  sourceHints: string[],
+): string[] {
+  const out: string[] = [];
+  for (const c of aiCerts ?? []) pushUniqueCert(out, c);
+  for (const c of sourceHints) pushUniqueCert(out, c);
+  return out;
+}
+
 export function mergePreservedSourceFields<
   T extends {
     contact: {
@@ -99,18 +163,22 @@ export function mergePreservedSourceFields<
       portfolio?: string;
     };
     certifications?: string[];
+    skills?: string[];
+    projects?: { name: string; description: string; tech?: string }[];
   },
->(resume: T, sourceText: string): T {
+>(
+  resume: T,
+  sourceText: string,
+  options?: { includeSkills?: boolean; includeProjects?: boolean },
+): T {
   const hints = extractPreserveHints(sourceText);
-  const existingCerts = resume.certifications ?? [];
-  const rawCerts =
-    existingCerts.filter((c) => c.trim().length > 0).length > 0
-      ? existingCerts
-      : hints.certifications;
+  const certifications = mergeCertifications(
+    resume.certifications,
+    hints.certifications,
+  );
 
-  const certifications = rawCerts
-    .map((c) => cleanEmptyDecorators(c))
-    .filter((c) => c.length > 0);
+  const includeSkills = options?.includeSkills !== false;
+  const includeProjects = options?.includeProjects !== false;
 
   return {
     ...resume,
@@ -123,5 +191,7 @@ export function mergePreservedSourceFields<
       portfolio: prefer(resume.contact.portfolio, hints.portfolio),
     },
     certifications,
+    skills: includeSkills ? (resume.skills ?? []) : [],
+    projects: includeProjects ? (resume.projects ?? []) : [],
   };
 }

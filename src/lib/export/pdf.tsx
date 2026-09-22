@@ -143,10 +143,12 @@ function ResumePdfDocument({
           ))}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Technical Skills</Text>
-          <Text style={styles.body}>{resume.skills.join(", ")}</Text>
-        </View>
+        {resume.skills?.length ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Technical Skills</Text>
+            <Text style={styles.body}>{resume.skills.join(", ")}</Text>
+          </View>
+        ) : null}
 
         {resume.projects?.length ? (
           <View style={styles.section}>
