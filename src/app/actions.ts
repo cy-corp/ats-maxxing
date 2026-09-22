@@ -65,6 +65,7 @@ export async function generateResumeAction(input: {
   language: OutputLanguage;
   larpingLevel: LarpingLevel;
   density: ResumeDensity;
+  yearsOfExperience?: number;
 }): Promise<GenerateActionResult> {
   const resumeText = input.resumeText?.trim() ?? "";
   const jobText = input.jobText?.trim() ?? "";
@@ -79,12 +80,22 @@ export async function generateResumeAction(input: {
   const density: ResumeDensity =
     input.density === "extended" ? "extended" : "condensed";
 
+  const yearsRaw = input.yearsOfExperience;
+  const yearsOfExperience =
+    typeof yearsRaw === "number" &&
+    Number.isFinite(yearsRaw) &&
+    yearsRaw >= 1 &&
+    yearsRaw <= 40
+      ? Math.round(yearsRaw)
+      : undefined;
+
   const payload: GenerateRequest = {
     resumeText: resumeText.slice(0, 40000),
     jobText: jobText.slice(0, 20000),
     language: input.language,
     larpingLevel: input.larpingLevel,
     density,
+    ...(yearsOfExperience !== undefined ? { yearsOfExperience } : {}),
   };
 
   try {

@@ -13,6 +13,7 @@ import { LarpingSlider } from "@/components/workspace/larping-slider";
 import { MatchScore } from "@/components/workspace/match-score";
 import { ResumeInput } from "@/components/workspace/resume-input";
 import { ResumePreview } from "@/components/workspace/resume-preview";
+import { YearsInput } from "@/components/workspace/years-input";
 import type {
   LarpingLevel,
   OptimizedResume,
@@ -31,6 +32,9 @@ export function Workspace() {
   const [language, setLanguage] = useState<OutputLanguage>("en");
   const [larpingLevel, setLarpingLevel] = useState<LarpingLevel>(2);
   const [density, setDensity] = useState<ResumeDensity>("condensed");
+  const [yearsOfExperience, setYearsOfExperience] = useState<
+    number | undefined
+  >(undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rateLimited, setRateLimited] = useState(false);
@@ -56,6 +60,7 @@ export function Workspace() {
         language,
         larpingLevel,
         density,
+        yearsOfExperience,
       });
       if (!res.ok) {
         setError(res.error);
@@ -131,6 +136,11 @@ export function Workspace() {
             />
             <div className="border-t border-dashed border-[var(--border)]" />
             <LanguageSelector value={language} onChange={setLanguage} />
+            <div className="border-t border-dashed border-[var(--border)]" />
+            <YearsInput
+              value={yearsOfExperience}
+              onChange={setYearsOfExperience}
+            />
             <div className="border-t border-dashed border-[var(--border)]" />
             <DensitySelector value={density} onChange={setDensity} />
             <div className="border-t border-dashed border-[var(--border)]" />

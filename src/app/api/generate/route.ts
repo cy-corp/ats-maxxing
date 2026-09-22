@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
       language?: OutputLanguage;
       larpingLevel?: LarpingLevel;
       density?: ResumeDensity;
+      yearsOfExperience?: number;
     };
 
     const resumeText = body.resumeText?.trim() ?? "";
@@ -34,6 +35,15 @@ export async function POST(req: NextRequest) {
     const density: ResumeDensity =
       body.density === "extended" ? "extended" : "condensed";
 
+    const yearsRaw = body.yearsOfExperience;
+    const yearsOfExperience =
+      typeof yearsRaw === "number" &&
+      Number.isFinite(yearsRaw) &&
+      yearsRaw >= 1 &&
+      yearsRaw <= 40
+        ? Math.round(yearsRaw)
+        : undefined;
+
     const input: GenerateRequest = {
       resumeText: resumeText.slice(0, 40000),
       jobText: jobText.slice(0, 20000),
@@ -42,6 +52,7 @@ export async function POST(req: NextRequest) {
         ? Number(body.larpingLevel)
         : 2) as LarpingLevel,
       density,
+      ...(yearsOfExperience !== undefined ? { yearsOfExperience } : {}),
     };
 
     const { resume, provider } = await generateOptimizedResume(input);

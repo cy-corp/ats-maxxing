@@ -130,7 +130,7 @@ ALWAYS (ATS hard rules):
 - Section titles must be exactly: "Professional Experience", "Technical Skills", "Education", "Projects", "Certifications" (language-aware: use Portuguese equivalents if language=pt). Never use bare "Experience".
 - Contact block: never invent or drop phone, location, LinkedIn, portfolio. Copy from source or leave empty string "" only if truly absent.
 - Certifications: copy every certification from the source resume. Do not drop any. If a cert has no year/date, omit parentheses entirely — never output empty "()".
-- YEARS OF EXPERIENCE: Never reduce the candidate's true tenure from the source to match a lower JD minimum. If source supports 3+ years and JD asks for 2+, write 3+ (or the accurate higher figure). Matching a lower JD number by understating experience hurts the candidate and is not required for ATS.
+- YEARS OF EXPERIENCE: Never reduce true tenure to match a lower JD minimum. Prefer an explicit user years override when present; otherwise compute from earliest job start → today as whole "N+ years". Never invent a lower figure (e.g. "1.5+") when dates support "2+".
 - Summary must open with or clearly contain the exact target job title from the JD (e.g. "Software Engineer (Java) with 3+ years...").
 - Every experience bullet should contain at least one quantifiable element when possible (numbers, %, $, time saved, team size, volume, ranking). Prefer this over pure duty statements.
 - Prefer 1–2 strong metrics per bullet rather than vague adjectives.
@@ -149,9 +149,11 @@ HARD RULES — ATS PARSERS (Jobscan-style):
    - Do not delete source certs to shorten the resume.
 
 3) YEARS OF EXPERIENCE (do not understate):
-   - Infer tenure from source dates / explicit claims (e.g. 3+ years).
-   - NEVER lower that number just because the JD asks for fewer years (e.g. JD "2+" while source is "3+" → keep "3+").
-   - You may keep or modestly round up when larping allows; never round down below source truth.
+   - If the user provides an explicit years override, that number is the FLOOR — use it (or higher if source dates prove more). Write as "N+" (e.g. 3 → "3+ years").
+   - Otherwise COMPUTE tenure: earliest Professional Experience start date → TODAY (date given in the user prompt). Convert months to years; round DOWN to whole years for the floor, then phrase as "N+" (e.g. 26 months → "2+ years"). Do NOT invent a lower figure like 1.5 when dates support 2+.
+   - Prefer whole years ("2+", "3+") over decimals ("1.5+") unless the candidate already wrote a decimal.
+   - NEVER lower that number just because the JD asks for fewer years (e.g. JD "2+" while truth is "3+" → keep "3+").
+   - You may modestly round up when larping allows; never round down below computed/override truth.
 
 4) EXACT JOB TITLE:
    - Extract the target job title from the JD.
@@ -192,12 +194,24 @@ OUTPUT SHAPE:
 - ONE JSON object matching the schema. Never an array at the root.`;
 }
 
+function yearsInstruction(input: GenerateRequest): string {
+  const today = new Date().toISOString().slice(0, 10);
+  const override = input.yearsOfExperience;
+  if (typeof override === "number" && Number.isFinite(override) && override > 0) {
+    const n = Math.max(1, Math.round(override));
+    return `YEARS OVERRIDE (authoritative floor): use at least "${n}+ years" in the Professional Summary. Today is ${today}. If source dates imply more than ${n} years, use the higher figure. Never write less than ${n}+.`;
+  }
+  return `YEARS OF EXPERIENCE: Today is ${today}. Compute from the earliest Professional Experience start date in the source through today (months÷12). Phrase as whole "N+ years" (round down to whole years for the floor). Example: start Jul 2024 → Sep 2026 ≈ 26 months → "2+ years", NOT "1.5+".`;
+}
+
 export function buildUserPrompt(input: GenerateRequest): string {
   return `${languageInstruction(input.language)}
 
 ${larpingBlock(input.larpingLevel)}
 
 ${densityInstruction(input.density)}
+
+${yearsInstruction(input)}
 
 === CANDIDATE RESUME (SOURCE) ===
 ${input.resumeText.trim().slice(0, 20000)}
@@ -209,7 +223,7 @@ Produce ONE OptimizedResume JSON object now.
 
 FINAL CHECKLIST BEFORE OUTPUT:
 1. Did I keep phone + location + all certs from source (no empty "()" on certs)?
-2. Does the summary contain the exact JD job title AND at least the true years from source (never lower)?
+2. Does the summary contain the exact JD job title AND at least the true years (override floor or date-computed — never lower)?
 3. Are ≥80% (or the larping target) of JD hard skills present with exact spelling?
 4. Does every recent bullet contain a number / % / scale when the level allows?
 5. Is the content dense enough to fill ~1 page (condensed) or 2 pages (extended)?

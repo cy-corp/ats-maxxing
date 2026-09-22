@@ -66,6 +66,12 @@ export interface GenerateRequest {
   language: OutputLanguage;
   larpingLevel: LarpingLevel;
   density: ResumeDensity;
+  /**
+   * Optional floor for "X+ years" in the summary.
+   * Use when source omits relevant tenure (e.g. internship).
+   * If unset, the model must compute from the earliest listed job start → today.
+   */
+  yearsOfExperience?: number;
 }
 
 export interface ScrapeResult {
