@@ -7,7 +7,10 @@ const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 const PHONE_RE =
   /(?:\+\d{1,3}[\s.-]?)?(?:\(?\d{2,3}\)?[\s.-]?)?\d{4,5}[\s.-]?\d{4}\b/;
 const LINKEDIN_RE = /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?/i;
+const GITHUB_RE = /(?:https?:\/\/)?(?:www\.)?github\.com\/[A-Za-z0-9_.-]+\/?/i;
 const URL_RE = /https?:\/\/[^\s)]+/i;
+const LABELED_PORTFOLIO_RE =
+  /portfolio\s*[:|]?\s*((?:https?:\/\/)?[a-z0-9][a-z0-9.-]*\.[a-z]{2,}(?:\/[^\s|]*)?)/i;
 
 const LOCATION_LINE_RE =
   /\b(?:Remote|[A-ZÁÉÍÓÚÂÊÔÃÕ][\wÁÉÍÓÚÂÊÔÃÕáéíóúâêôãõç.-]+(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕ][\wÁÉÍÓÚÂÊÔÃÕáéíóúâêôãõç.-]+){0,3}),\s*(?:[A-Z]{2}|[A-ZÁÉÍÓÚÂÊÔÃÕ][\wÁÉÍÓÚÂÊÔÃÕáéíóúâêôãõç.-]+)(?:\s*[,/]\s*[A-ZÁÉÍÓÚÂÊÔÃÕ][\wÁÉÍÓÚÂÊÔÃÕáéíóúâêôãõç.-]+)?\b/;
@@ -24,6 +27,7 @@ export interface SourcePreserveHints {
   phone?: string;
   location?: string;
   linkedin?: string;
+  github?: string;
   portfolio?: string;
   certifications: string[];
 }
@@ -92,14 +96,24 @@ export function extractPreserveHints(sourceText: string): SourcePreserveHints {
   const email = text.match(EMAIL_RE)?.[0]?.trim();
   const phone = text.match(PHONE_RE)?.[0]?.trim();
   const linkedin = text.match(LINKEDIN_RE)?.[0]?.trim();
+  const github = text.match(GITHUB_RE)?.[0]?.trim();
 
   let portfolio: string | undefined;
-  for (const m of text.matchAll(new RegExp(URL_RE.source, "gi"))) {
-    const url = m[0];
-    if (/linkedin\.com/i.test(url)) continue;
-    if (/github\.com|gitlab\.com|portfolio|vercel\.app|netlify|behance|dribbble/i.test(url)) {
-      portfolio = url;
-      break;
+  const labeledPortfolio = text.match(LABELED_PORTFOLIO_RE)?.[1]?.trim();
+  if (
+    labeledPortfolio &&
+    !/github\.com|linkedin\.com/i.test(labeledPortfolio)
+  ) {
+    portfolio = labeledPortfolio;
+  }
+  if (!portfolio) {
+    for (const m of text.matchAll(new RegExp(URL_RE.source, "gi"))) {
+      const url = m[0];
+      if (/linkedin\.com|github\.com/i.test(url)) continue;
+      if (/gitlab\.com|portfolio|vercel\.app|netlify|behance|dribbble/i.test(url)) {
+        portfolio = url;
+        break;
+      }
     }
   }
 
@@ -118,6 +132,7 @@ export function extractPreserveHints(sourceText: string): SourcePreserveHints {
     phone,
     location,
     linkedin,
+    github,
     portfolio,
     certifications: certifications.slice(0, 16),
   };
@@ -160,6 +175,7 @@ export function mergePreservedSourceFields<
       phone?: string;
       location?: string;
       linkedin?: string;
+      github?: string;
       portfolio?: string;
     };
     certifications?: string[];
@@ -188,6 +204,7 @@ export function mergePreservedSourceFields<
       phone: prefer(resume.contact.phone, hints.phone),
       location: prefer(resume.contact.location, hints.location),
       linkedin: prefer(resume.contact.linkedin, hints.linkedin),
+      github: prefer(resume.contact.github, hints.github),
       portfolio: prefer(resume.contact.portfolio, hints.portfolio),
     },
     certifications,

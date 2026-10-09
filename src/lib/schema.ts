@@ -11,6 +11,7 @@ export const optimizedResumeSchema = z.object({
     phone: z.string(),
     location: z.string(),
     linkedin: z.string(),
+    github: z.string(),
     portfolio: z.string(),
   }),
   summary: z.string(),

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test src/lib/prompts.test.ts src/lib/pdf-text.test.ts src/lib/preserve-source.test.ts && esbuild src/lib/export/pdf-hyphen.test.ts --bundle --platform=node --format=esm --external:react --external:@react-pdf/renderer --external:unpdf --outfile=src/lib/export/pdf-hyphen.bundle.mjs && node --test src/lib/export/pdf-hyphen.bundle.mjs; status=$?; rm -f src/lib/export/pdf-hyphen.bundle.mjs; exit $status"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.76",
@@ -43,6 +44,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

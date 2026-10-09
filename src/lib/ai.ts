@@ -136,10 +136,14 @@ export async function generateOptimizedResume(
   const { provider, model } = getPrimaryModel();
   const includeSkills = input.includeTechnicalSkills !== false;
   const includeProjects = input.includeProjects !== false;
-  const system = buildSystemPrompt(input.density, {
-    includeTechnicalSkills: includeSkills,
-    includeProjects,
-  });
+  const system = buildSystemPrompt(
+    input.density,
+    {
+      includeTechnicalSkills: includeSkills,
+      includeProjects,
+    },
+    input.larpingLevel,
+  );
   const prompt = buildUserPrompt(input);
 
   const controller = new AbortController();

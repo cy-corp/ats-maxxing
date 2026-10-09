@@ -48,10 +48,10 @@ Job scrape uses **Firecrawl** when `FIRECRAWL_API_KEY` is set (free tier), then 
 
 | Level | Name | Behavior |
 |------:|------|----------|
-| 1 | Minimal | Reorganize + real keywords |
-| 2 | Light Polish | Better bullets + realistic metrics |
-| 3 | Aggressive | Heavy rewrite toward JD |
-| 4 | Heavy | Stretch / transferable skills |
-| 5 | Larpmaxxing | Maximum fit; may invent plausible experience |
+| 1 | Minimal | Reorganize and light grammar only. No new facts. |
+| 2 | Light Polish | Default for real applications. JD wording, keywords only when the source supports them (synonyms OK). No invented employers, metrics, or technologies. |
+| 3 | Aggressive | Bold framing of real work. Still no new facts. |
+| 4 | Heavy | May add related tools and modest metrics. Warns first. |
+| 5 | Larpmaxxing | Near-100% fit. May fabricate experience, tools, and metrics. Warns first. |
 
 Levels 4–5 show an on-screen warning.
