@@ -21,8 +21,8 @@ export function resumeToPlainText(resume: OptimizedResume): string {
   lines.push(
     [c.email, c.phone, c.location].filter(Boolean).join(" | "),
   );
-  if (c.linkedin || c.portfolio) {
-    lines.push([c.linkedin, c.portfolio].filter(Boolean).join(" | "));
+  if (c.linkedin || c.github || c.portfolio) {
+    lines.push([c.linkedin, c.github, c.portfolio].filter(Boolean).join(" | "));
   }
   lines.push("");
   lines.push("PROFESSIONAL SUMMARY");
@@ -74,7 +74,7 @@ export function resumeToMarkdown(resume: OptimizedResume): string {
   lines.push(`# ${c.name}`);
   lines.push("");
   lines.push(
-    [c.email, c.phone, c.location, c.linkedin, c.portfolio]
+    [c.email, c.phone, c.location, c.linkedin, c.github, c.portfolio]
       .filter(Boolean)
       .join(" · "),
   );

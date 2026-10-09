@@ -9,6 +9,7 @@ import {
 } from "@react-pdf/renderer";
 import type { OptimizedResume, ResumeDensity } from "../types";
 import { cleanEmptyDecorators } from "../preserve-source";
+import { toPdfSafeText } from "../pdf-text";
 
 function createStyles(density: ResumeDensity) {
   const condensed = density === "condensed";
@@ -85,25 +86,28 @@ function ResumePdfDocument({
   density: ResumeDensity;
 }) {
   const styles = createStyles(density);
+  const safe = toPdfSafeText;
   const contactLine = [
     resume.contact.email,
     resume.contact.phone,
     resume.contact.location,
     resume.contact.linkedin,
+    resume.contact.github,
     resume.contact.portfolio,
   ]
     .filter(Boolean)
+    .map((part) => safe(part as string))
     .join(" | ");
 
   return (
     <Document>
       <Page size="LETTER" style={styles.page} wrap>
-        <Text style={styles.name}>{resume.contact.name}</Text>
+        <Text style={styles.name}>{safe(resume.contact.name)}</Text>
         <Text style={styles.contact}>{contactLine}</Text>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Professional Summary</Text>
-          <Text style={styles.body}>{resume.summary}</Text>
+          <Text style={styles.body}>{safe(resume.summary)}</Text>
         </View>
 
         <View style={styles.section}>
@@ -111,16 +115,16 @@ function ResumePdfDocument({
           {resume.experience.map((exp, i) => (
             <View key={`${exp.company}-${i}`} wrap={false}>
               <Text style={styles.jobTitle}>
-                {exp.title} — {exp.company}
+                {safe(exp.title)} — {safe(exp.company)}
               </Text>
               <Text style={styles.meta}>
-                {exp.startDate} – {exp.endDate}
-                {exp.location ? ` | ${exp.location}` : ""}
+                {safe(exp.startDate)} – {safe(exp.endDate)}
+                {exp.location ? ` | ${safe(exp.location)}` : ""}
               </Text>
               {exp.bullets.map((b, j) => (
                 <View key={j} style={styles.bullet}>
                   <Text style={styles.bulletDot}>•</Text>
-                  <Text style={styles.bulletText}>{b}</Text>
+                  <Text style={styles.bulletText}>{safe(b)}</Text>
                 </View>
               ))}
             </View>
@@ -133,11 +137,11 @@ function ResumePdfDocument({
             <View key={`${edu.school}-${i}`}>
               <Text style={styles.body}>
                 {edu.year?.trim()
-                  ? `${edu.degree} — ${edu.school} (${edu.year.trim()})`
-                  : `${edu.degree} — ${edu.school}`}
+                  ? safe(`${edu.degree} — ${edu.school} (${edu.year.trim()})`)
+                  : safe(`${edu.degree} — ${edu.school}`)}
               </Text>
               {edu.details ? (
-                <Text style={styles.meta}>{edu.details}</Text>
+                <Text style={styles.meta}>{safe(edu.details)}</Text>
               ) : null}
             </View>
           ))}
@@ -146,7 +150,7 @@ function ResumePdfDocument({
         {resume.skills?.length ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Technical Skills</Text>
-            <Text style={styles.body}>{resume.skills.join(", ")}</Text>
+            <Text style={styles.body}>{safe(resume.skills.join(", "))}</Text>
           </View>
         ) : null}
 
@@ -155,8 +159,9 @@ function ResumePdfDocument({
             <Text style={styles.sectionTitle}>Projects</Text>
             {resume.projects.map((p, i) => (
               <Text key={i} style={styles.body}>
-                {p.name}
-                {p.tech?.trim() ? ` (${p.tech.trim()})` : ""}: {p.description}
+                {safe(
+                  `${p.name}${p.tech?.trim() ? ` (${p.tech.trim()})` : ""}: ${p.description}`,
+                )}
               </Text>
             ))}
           </View>
@@ -171,7 +176,7 @@ function ResumePdfDocument({
               return (
                 <View key={i} style={styles.bullet}>
                   <Text style={styles.bulletDot}>•</Text>
-                  <Text style={styles.bulletText}>{cleaned}</Text>
+                  <Text style={styles.bulletText}>{safe(cleaned)}</Text>
                 </View>
               );
             })}

@@ -11,6 +11,8 @@ export interface ContactInfo {
   phone?: string;
   location?: string;
   linkedin?: string;
+  /** GitHub profile, separate from portfolio. */
+  github?: string;
   portfolio?: string;
 }
 

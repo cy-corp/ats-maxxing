@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+src/lib/export/pdf-hyphen.bundle.mjs
 
 # next.js
 /.next/

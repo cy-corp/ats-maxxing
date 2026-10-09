@@ -26,6 +26,7 @@ export async function buildDocxBuffer(resume: OptimizedResume): Promise<Buffer> 
     resume.contact.phone,
     resume.contact.location,
     resume.contact.linkedin,
+    resume.contact.github,
     resume.contact.portfolio,
   ]
     .filter(Boolean)
