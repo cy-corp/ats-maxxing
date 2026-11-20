@@ -55,3 +55,7 @@ Job scrape uses **Firecrawl** when `FIRECRAWL_API_KEY` is set (free tier), then 
 | 5 | Larpmaxxing | Near-100% fit. May fabricate experience, tools, and metrics. Warns first. |
 
 Levels 4–5 show an on-screen warning.
+
+### Fact gate (levels 1–3)
+
+After generation, `src/lib/fact-gate.ts` checks the output against the source resume: every number (except dates and an `N+ years` the source dates support), every known technology and every employer must appear in the source. On a violation the model gets one retry with the violations named; anything still unsupported is removed (whole skill, bullet, summary sentence or project; real jobs are kept). The response carries `resume.factCheck` with what was removed.
