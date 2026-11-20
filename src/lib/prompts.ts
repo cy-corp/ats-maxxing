@@ -53,9 +53,9 @@ function densityInstruction(
   if (density === "condensed") {
     return `DENSITY MODE: CONDENSED (target 1 full US Letter page, hard max 2 pages)
 
-PRIMARY GOAL: Produce a dense, high-signal resume that fills ~1 full page when rendered with standard ATS formatting (11pt Arial/Calibri, 0.5–0.7" margins, single column). Do NOT produce sparse content.
+PRIMARY GOAL: ${level <= 3 ? "A high-signal resume of up to 1 page built only from what the source supports. If the true content is shorter than a page, a shorter resume is correct: never add facts to fill space." : "Produce a dense, high-signal resume that fills ~1 full page when rendered with standard ATS formatting (11pt Arial/Calibri, 0.5–0.7\" margins, single column). Do NOT produce sparse content."}
 
-Hard length budgets (strict — treat as soft targets that must be approached):
+Length budgets (${level <= 3 ? "upper limits only; truth wins over length" : "soft targets that must be approached"}):
 - Summary: 3–5 sentences, 420–680 characters. Must include the exact target job title from the JD as a target profile (not as a job the candidate held). ${level <= 3 ? "Quantified claims only when the source already states the number." : "Include 2–3 quantified claims; level 4–5 may stretch numbers."}
 - Professional Experience: ${level <= 3 ? "every real role from the source and no others (do not invent a role to fill space)." : "3–6 roles (prefer 4–5)."} Most recent / most relevant role: 4–6 bullets. Older relevant roles: 3–5 bullets. Drop only clearly irrelevant early-career roles.
 - Bullet length: 110–160 characters each (roughly 18–28 words). Start with a strong action verb. Include a number only when the source already states it${level >= 4 ? ", or when this larping level explicitly allows a stretched metric" : ""}.
@@ -71,7 +71,7 @@ Priority order when space is tight (certs are NEVER optional):
 4. Hard skills the larping contract allows — in skills[] if enabled, else weave into bullets
 5. Remaining roles / projects (only if projects enabled)
 
-${level <= 3 ? "NEVER add an experience role the source does not contain. If the source has two jobs, output two jobs." : "Never produce fewer than 3 experience roles unless the source has fewer."} Prefer substance over artificial brevity. 1.0–1.4 pages is ideal; 1.5–2 is acceptable if source is rich.`;
+${level <= 3 ? "NEVER add an experience role the source does not contain. If the source has two jobs, output two jobs." : "Never produce fewer than 3 experience roles unless the source has fewer."} ${level <= 3 ? "Use only real content; under a page is fine when the source is short." : "Prefer substance over artificial brevity. 1.0–1.4 pages is ideal; 1.5–2 is acceptable if source is rich."}`;
   }
 
   return `DENSITY MODE: EXTENDED (target 2 pages, up to 3 OK)

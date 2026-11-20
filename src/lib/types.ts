@@ -58,6 +58,14 @@ export interface OptimizedResume {
   injectedKeywords: string[];
   plainText: string;
   markdown: string;
+  /**
+   * Levels 1–3 only: result of the deterministic fact gate. `removed` lists the
+   * unsupported claims stripped after one retry (empty when the output was clean).
+   */
+  factCheck?: {
+    retried: boolean;
+    removed: { kind: "number" | "technology" | "employer"; value: string; where: string; text: string }[];
+  };
   /** Set by the app after generate — drives PDF density, not from the model. */
   density?: ResumeDensity;
 }

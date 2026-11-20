@@ -6,6 +6,13 @@ import {
 import { createGroq } from "@ai-sdk/groq";
 import { generateObject, NoObjectGeneratedError } from "ai";
 import { resumeToMarkdown, resumeToPlainText } from "./export/format";
+import {
+  checkFacts,
+  describeViolations,
+  stripUnsupported,
+  type FactViolation,
+} from "./fact-gate";
+import { getLarpingMeta } from "./larping";
 import { mergePreservedSourceFields } from "./preserve-source";
 import { buildSystemPrompt, buildUserPrompt } from "./prompts";
 import { optimizedResumeSchema } from "./schema";
@@ -115,6 +122,8 @@ export function assertAiConfigured() {
 }
 
 const GENERATE_TIMEOUT_MS = 90_000;
+/** Fact-gate retry only starts if the first call used less than this share of the budget. */
+const RETRY_BUDGET_FRACTION = 0.45;
 
 function withExports(
   partial: Omit<OptimizedResume, "plainText" | "markdown">,
@@ -149,7 +158,7 @@ export async function generateOptimizedResume(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), GENERATE_TIMEOUT_MS);
 
-  try {
+  const generate = async (p: string) => {
     const { object } = await generateObject({
       model,
       schema: optimizedResumeSchema,
@@ -157,7 +166,7 @@ export async function generateOptimizedResume(
       schemaDescription:
         "A single optimized resume object (never an array). Includes contact, summary, experience, education, skills, projects, certifications, scores, and injectedKeywords.",
       system,
-      prompt,
+      prompt: p,
       temperature: 0.3,
       maxOutputTokens: 8192,
       abortSignal: controller.signal,
@@ -174,11 +183,40 @@ export async function generateOptimizedResume(
             },
           }),
     });
+    return object;
+  };
+
+  const startedAt = Date.now();
+
+  try {
+    let object = await generate(prompt);
+    let factCheck: OptimizedResume["factCheck"];
+
+    // Levels 1–3 promise no new facts. Check the output against the source;
+    // retry once with the violations named, then strip whatever is left.
+    if (getLarpingMeta(input.larpingLevel).truthful) {
+      const checkOpts = { yearsOverride: input.yearsOfExperience };
+      let violations: FactViolation[] = checkFacts(object, input.resumeText, checkOpts);
+      // Retry only while there is time left in the request budget.
+      const retried =
+        violations.length > 0 &&
+        Date.now() - startedAt < GENERATE_TIMEOUT_MS * RETRY_BUDGET_FRACTION;
+      if (retried) {
+        object = await generate(`${prompt}\n\n${describeViolations(violations)}`);
+        violations = checkFacts(object, input.resumeText, checkOpts);
+      }
+      if (violations.length > 0) object = stripUnsupported(object, violations);
+      factCheck = { retried, removed: violations };
+    }
+
     return {
-      resume: withExports(object, input.resumeText, {
-        includeSkills,
-        includeProjects,
-      }),
+      resume: {
+        ...withExports(object, input.resumeText, {
+          includeSkills,
+          includeProjects,
+        }),
+        ...(factCheck ? { factCheck } : {}),
+      },
       provider,
     };
   } catch (err) {
